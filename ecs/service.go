@@ -108,6 +108,7 @@ func (s *Service) Update(svc *ecs.ECS) (*ecs.Service, error) {
 		}
 	}
 
+	fmt.Println("Updating Service...")
 	input := s.unpackUpdateInput()
 	snew, err := svc.UpdateService(input)
 	if err != nil {

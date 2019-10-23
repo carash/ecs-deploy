@@ -15,7 +15,7 @@ type Credential struct {
 	AWSRegion          *string
 }
 
-type Plugin struct {
+type ServicePlugin struct {
 	AWSCredential Credential
 	Service       Service
 }
@@ -40,13 +40,13 @@ func (c *Credential) newSession() *session.Session {
 	return session.Must(session.NewSession(&awsConfig))
 }
 
-func (p *Plugin) DeployService() error {
+func (p *ServicePlugin) DeployService() error {
 	svc := ecs.New(p.AWSCredential.newSession())
 	_, err := p.Service.Deploy(svc)
 	return err
 }
 
-func (p *Plugin) UpdateService() error {
+func (p *ServicePlugin) UpdateService() error {
 	svc := ecs.New(p.AWSCredential.newSession())
 	_, err := p.Service.Update(svc)
 	return err
