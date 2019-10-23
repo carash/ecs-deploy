@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -74,12 +73,12 @@ func main() {
 		cli.StringFlag{
 			Name:   "container-name",
 			Usage:  "Container name",
-			EnvVar: "PLUGIN_CONTAINER_NAME",
+			EnvVar: "PLUGIN_CONTAINER",
 		},
 		cli.StringFlag{
 			Name:   "docker-image",
 			Usage:  "image to use",
-			EnvVar: "PLUGIN_DOCKER_IMAGE",
+			EnvVar: "PLUGIN_IMAGE",
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
@@ -151,9 +150,6 @@ func run(c *cli.Context) error {
 		AWSCredential: creds,
 		Service:       service,
 	}
-
-	ss, _ := json.MarshalIndent(plugin, "", "  ")
-	fmt.Println(string(ss))
 
 	return plugin.UpdateService()
 }

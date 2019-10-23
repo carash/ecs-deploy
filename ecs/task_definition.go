@@ -88,8 +88,8 @@ func (td *TaskDefinition) Register(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 		return taskDefinition, nil
 	}
 
-	input := td.parse(taskDefinition).unpackRegisterInput()
 	fmt.Println("Registering new Task Definition...")
+	input := td.parse(taskDefinition).unpackRegisterInput()
 	tdnew, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
 		return nil, err
