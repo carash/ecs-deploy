@@ -57,7 +57,7 @@ func (p *ImagePlugin) WaitForImage(interval, timeout int64) error {
 			go func() {
 				imgs, err := p.Image.Find(reg)
 				if err != nil {
-					if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "ImageNotFoundException" {
+					if aerr, ok := err.(awserr.Error); ok && aerr.Code() == ecr.ErrCodeImageNotFoundException {
 						return
 					}
 					check <- err
