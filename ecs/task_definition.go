@@ -88,12 +88,13 @@ func (td *TaskDefinition) Register(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 		return taskDefinition, nil
 	}
 
-	fmt.Println("Registering new Task Definition...")
+	fmt.Printf("Registering new Task Definition from [%s]...\n", td.Family)
 	input := td.parse(taskDefinition).unpackRegisterInput()
 	tdnew, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Successfully registered [%s]\n", *tdnew.TaskDefinition.TaskDefinitionArn)
 
 	return tdnew.TaskDefinition, nil
 }
@@ -121,12 +122,13 @@ func (td *TaskDefinition) Update(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 		return tdout.TaskDefinition, nil
 	}
 
-	fmt.Println("Registering new Task Definition...")
+	fmt.Printf("Registering new Task Definition from [%s]...\n", td.Family)
 	input := td.parse(tdout.TaskDefinition).unpackRegisterInput()
 	tdnew, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Successfully registered [%s]\n", *tdnew.TaskDefinition.TaskDefinitionArn)
 
 	return tdnew.TaskDefinition, nil
 }
@@ -283,6 +285,19 @@ func parseFamily(family string) (string, error) {
 		return family, nil
 	case familyRevisionRegex.MatchString(family):
 		return strings.Split(family, ":")[0], nil
+	}
+
+	return "", fmt.Errorf("Family not found")
+}
+
+func parseFamilyRevision(family string) (string, error) {
+	switch true {
+	case arnRegex.MatchString(family):
+		return strings.SplitN(family, "/", 2)[1], nil
+	case familyRegex.MatchString(family):
+		return family, nil
+	case familyRevisionRegex.MatchString(family):
+		return family, nil
 	}
 
 	return "", fmt.Errorf("Family not found")

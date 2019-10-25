@@ -81,7 +81,7 @@ func (p *ImagePlugin) WaitForImage(interval, timeout int64) error {
 			return err
 		}
 	case <-time.After(time.Duration(timeout) * time.Second):
-		return fmt.Errorf("Timed out after %ds while waiting for Image [%s]", int64(time.Now().Sub(start).Seconds()), p.Image.DockerTag())
+		return fmt.Errorf("Timed out after %ds while waiting for Image [%s]\n", int64(time.Now().Sub(start).Seconds()), p.Image.DockerTag())
 	}
 
 	return nil
