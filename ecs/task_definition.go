@@ -94,8 +94,9 @@ func (td *TaskDefinition) Register(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Successfully registered [%s]\n", *tdnew.TaskDefinition.TaskDefinitionArn)
 
+	version, _ := parseFamilyRevision(*tdnew.TaskDefinition.TaskDefinitionArn)
+	fmt.Printf("Successfully registered [%s]\n\n", version)
 	return tdnew.TaskDefinition, nil
 }
 
@@ -128,8 +129,9 @@ func (td *TaskDefinition) Update(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Successfully registered [%s]\n", *tdnew.TaskDefinition.TaskDefinitionArn)
 
+	version, _ := parseFamilyRevision(*tdnew.TaskDefinition.TaskDefinitionArn)
+	fmt.Printf("Successfully registered [%s]\n\n", version)
 	return tdnew.TaskDefinition, nil
 }
 

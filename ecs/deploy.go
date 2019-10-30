@@ -84,13 +84,20 @@ func (p *ServicePlugin) UpdateService(timeout int64) error {
 
 				healthy := int64(0)
 				for _, t := range detout.Tasks {
+					taskDefinition, _ := parseFamilyRevision(*t.TaskDefinitionArn)
+					fmt.Printf("Status of [%s] -> %s\n", taskDefinition, *t.HealthStatus)
+
 					if *t.TaskDefinitionArn == *service.TaskDefinition && *t.HealthStatus == "HEALTHY" {
 						healthy += 1
 					}
 				}
+				fmt.Println()
 
+				if int64(len(taskout.TaskArns)) != *service.DesiredCount {
+					return
+				}
 				if healthy == *service.DesiredCount {
-					fmt.Printf("Task [%s] is HEALTHY after %d seconds\n", td, int64(time.Now().Sub(start).Seconds()))
+					fmt.Printf("Task [%s] is HEALTHY after %d seconds\n\n", td, int64(time.Now().Sub(start).Seconds()))
 					check <- nil
 					return
 				}
@@ -107,7 +114,7 @@ func (p *ServicePlugin) UpdateService(timeout int64) error {
 			return err
 		}
 	case <-time.After(time.Duration(timeout) * time.Second):
-		return fmt.Errorf("Timed out after %ds while wating for Task [%s] to deploy\n", int64(time.Now().Sub(start).Seconds()), td)
+		return fmt.Errorf("Timed out after %ds while wating for Task [%s] to deploy\n\n", int64(time.Now().Sub(start).Seconds()), td)
 	}
 
 	return nil

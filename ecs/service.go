@@ -64,8 +64,8 @@ func (s *Service) Deploy(svc *ecs.ECS) (*ecs.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Successfully deployed [%s]\n", *snew.Service.ServiceArn)
 
+	fmt.Printf("Successfully deployed [%s]\n\n", *snew.Service.ServiceName)
 	return snew.Service, nil
 }
 
@@ -116,8 +116,8 @@ func (s *Service) Update(svc *ecs.ECS) (*ecs.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Successfully updated [%s]\n", *snew.Service.ServiceArn)
 
+	fmt.Printf("Successfully updated [%s]\n\n", *snew.Service.ServiceName)
 	return snew.Service, nil
 }
 

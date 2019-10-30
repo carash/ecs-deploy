@@ -8,7 +8,7 @@ RUN apk add -qq --no-cache \
 WORKDIR /src
 
 COPY go.mod go.sum /src/
-RUN go mod verify
+RUN go mod download
 
 ENV GOOS=linux GOARCH=386
 COPY . /src/
