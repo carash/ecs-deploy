@@ -80,6 +80,11 @@ func main() {
 			Usage:  "image to use",
 			EnvVar: "PLUGIN_IMAGE",
 		},
+		cli.Int64Flag{
+			Name:   "timeout",
+			Usage:  "Timeout to wait for healthy check",
+			EnvVar: "PLUGIN_TIMEOUT",
+		},
 	}
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
@@ -151,5 +156,12 @@ func run(c *cli.Context) error {
 		Service:       service,
 	}
 
-	return plugin.UpdateService()
+	var timeout int64
+	if c.IsSet("timeout") {
+		timeout = c.Int64("timeout")
+	} else {
+		timeout = 600
+	}
+
+	return plugin.UpdateService(timeout)
 }

@@ -58,11 +58,13 @@ func (s *Service) Deploy(svc *ecs.ECS) (*ecs.Service, error) {
 		}
 	}
 
+	fmt.Printf("Deploying Service [%s]...\n", s.Service)
 	input := s.unpackUpdateInput()
 	snew, err := svc.UpdateService(input)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Successfully deployed [%s]\n", *snew.Service.ServiceArn)
 
 	return snew.Service, nil
 }
@@ -108,12 +110,13 @@ func (s *Service) Update(svc *ecs.ECS) (*ecs.Service, error) {
 		}
 	}
 
-	fmt.Println("Updating Service...")
+	fmt.Printf("Updating Service [%s]...\n", s.Service)
 	input := s.unpackUpdateInput()
 	snew, err := svc.UpdateService(input)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Successfully updated [%s]\n", *snew.Service.ServiceArn)
 
 	return snew.Service, nil
 }

@@ -1,6 +1,9 @@
 package ecs
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -46,10 +49,69 @@ func (p *ServicePlugin) DeployService() error {
 	return err
 }
 
-func (p *ServicePlugin) UpdateService() error {
+func (p *ServicePlugin) UpdateService(timeout int64) error {
 	svc := ecs.New(p.AWSCredential.newSession())
-	_, err := p.Service.Update(svc)
-	return err
+	service, err := p.Service.Update(svc)
+	if err != nil {
+		return err
+	}
+
+	start := time.Now()
+	check := make(chan error)
+	td, _ := parseFamilyRevision(*service.TaskDefinition)
+
+	go func() {
+		for {
+			go func() {
+				taskout, err := svc.ListTasks(&ecs.ListTasksInput{
+					Cluster:     p.Service.Cluster,
+					ServiceName: &p.Service.Service,
+				})
+				if err != nil {
+					check <- err
+				}
+				if len(taskout.TaskArns) == 0 {
+					return
+				}
+
+				detout, err := svc.DescribeTasks(&ecs.DescribeTasksInput{
+					Cluster: p.Service.Cluster,
+					Tasks:   taskout.TaskArns,
+				})
+				if err != nil {
+					check <- err
+				}
+
+				healthy := int64(0)
+				for _, t := range detout.Tasks {
+					if *t.TaskDefinitionArn == *service.TaskDefinition && *t.HealthStatus == "HEALTHY" {
+						healthy += 1
+					}
+				}
+
+				if healthy == *service.DesiredCount {
+					fmt.Printf("Task [%s] is HEALTHY after %d seconds\n", td, int64(time.Now().Sub(start).Seconds()))
+					check <- nil
+					return
+				}
+			}()
+
+			time.Sleep(10 * time.Second)
+			fmt.Printf("Waiting for Task [%s] to be HEALTHY, %ds...\n", td, int64(time.Now().Sub(start).Seconds()))
+		}
+	}()
+
+	select {
+	case err := <-check:
+		if err != nil {
+			return err
+		}
+	case <-time.After(time.Duration(timeout) * time.Second):
+		return fmt.Errorf("Timed out after %ds while wating for Task [%s] to deploy\n", int64(time.Now().Sub(start).Seconds()), td)
+	}
+
+	return nil
+
 }
 
 func (p *TaskPlugin) RegisterTask() error {
