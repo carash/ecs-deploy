@@ -43,7 +43,9 @@ func (s *Service) Deploy(svc *ecs.ECS) (*ecs.Service, error) {
 		return nil, err
 	}
 
-	if len(srvout.Services) != 1 {
+	if len(srvout.Services) == 0 {
+		return nil, fmt.Errorf("Cluster/Service combination not found")
+	} else if len(srvout.Services) > 1 {
 		return nil, fmt.Errorf("You can only update exactly 1 Service")
 	}
 	srv := srvout.Services[0]
