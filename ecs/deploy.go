@@ -4,53 +4,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+
+	cred "github.com/carash/ecs-deploy/credential"
 )
 
-type Credential struct {
-	AWSAccessKeyID     *string
-	AWSSecretAccessKey *string
-	AWSAssumeRoleARN   *string
-	AWSRegion          *string
-}
-
 type ServicePlugin struct {
-	AWSCredential Credential
+	AWSCredential cred.Credential
 	Service       Service
 }
 
 type TaskPlugin struct {
-	AWSCredential  Credential
+	AWSCredential  cred.Credential
 	TaskDefinition TaskDefinition
 }
 
-func (c *Credential) newSession() *session.Session {
-	awsConfig := aws.Config{}
-
-	if c.AWSAccessKeyID != nil && c.AWSSecretAccessKey != nil {
-		awsConfig.Credentials = credentials.NewStaticCredentials(*c.AWSAccessKeyID, *c.AWSSecretAccessKey, "")
-	} else if c.AWSAssumeRoleARN != nil {
-		awsConfig.Credentials = stscreds.NewCredentials(session.Must(session.NewSession()), *c.AWSAssumeRoleARN)
-	}
-	if c.AWSRegion != nil {
-		awsConfig.Region = aws.String(*c.AWSRegion)
-	}
-
-	return session.Must(session.NewSession(&awsConfig))
-}
-
 func (p *ServicePlugin) DeployService() error {
-	svc := ecs.New(p.AWSCredential.newSession())
+	svc := ecs.New(p.AWSCredential.NewSession())
 	_, err := p.Service.Deploy(svc)
 	return err
 }
 
 func (p *ServicePlugin) UpdateService(timeout int64) error {
-	svc := ecs.New(p.AWSCredential.newSession())
+	svc := ecs.New(p.AWSCredential.NewSession())
 	service, err := p.Service.Update(svc)
 	if err != nil {
 		return err
@@ -122,13 +98,13 @@ func (p *ServicePlugin) UpdateService(timeout int64) error {
 }
 
 func (p *TaskPlugin) RegisterTask() error {
-	svc := ecs.New(p.AWSCredential.newSession())
+	svc := ecs.New(p.AWSCredential.NewSession())
 	_, err := p.TaskDefinition.Register(svc)
 	return err
 }
 
 func (p *TaskPlugin) UpdateTask() error {
-	svc := ecs.New(p.AWSCredential.newSession())
+	svc := ecs.New(p.AWSCredential.NewSession())
 	_, err := p.TaskDefinition.Update(svc)
 	return err
 }
