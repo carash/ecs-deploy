@@ -8,22 +8,22 @@ import (
 )
 
 type Credential struct {
-	AWSAccessKeyID     *string
-	AWSSecretAccessKey *string
-	AWSAssumeRoleARN   *string
-	AWSRegion          *string
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+	AWSAssumeRoleARN   string
+	AWSRegion          string
 }
 
 func (c *Credential) NewSession() *session.Session {
 	awsConfig := aws.Config{}
 
-	if c.AWSAccessKeyID != nil && c.AWSSecretAccessKey != nil {
-		awsConfig.Credentials = credentials.NewStaticCredentials(*c.AWSAccessKeyID, *c.AWSSecretAccessKey, "")
-	} else if c.AWSAssumeRoleARN != nil {
-		awsConfig.Credentials = stscreds.NewCredentials(session.Must(session.NewSession()), *c.AWSAssumeRoleARN)
+	if c.AWSAccessKeyID != "" && c.AWSSecretAccessKey != "" {
+		awsConfig.Credentials = credentials.NewStaticCredentials(c.AWSAccessKeyID, c.AWSSecretAccessKey, "")
+	} else if c.AWSAssumeRoleARN != "" {
+		awsConfig.Credentials = stscreds.NewCredentials(session.Must(session.NewSession()), c.AWSAssumeRoleARN)
 	}
-	if c.AWSRegion != nil {
-		awsConfig.Region = aws.String(*c.AWSRegion)
+	if c.AWSRegion != "" {
+		awsConfig.Region = aws.String(c.AWSRegion)
 	}
 
 	return session.Must(session.NewSession(&awsConfig))

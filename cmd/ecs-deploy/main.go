@@ -10,6 +10,7 @@ import (
 
 	awsecs "github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/carash/ecs-deploy/ecs"
+	cred "github.com/carash/ecs-deploy/credential"
 	"github.com/urfave/cli"
 )
 
@@ -92,23 +93,11 @@ func main() {
 }
 
 func run(c *cli.Context) error {
-	creds := ecs.Credential{}
-	if c.IsSet("access-key") {
-		s := c.String("access-key")
-		creds.AWSAccessKeyID = &s
-	}
-	if c.IsSet("secret-key") {
-		s := c.String("secret-key")
-		creds.AWSSecretAccessKey = &s
-	}
-	if c.IsSet("assume-role-arn") {
-		s := c.String("assume-role-arn")
-		creds.AWSAssumeRoleARN = &s
-	}
-	if c.IsSet("aws-region") {
-		s := c.String("aws-region")
-		creds.AWSRegion = &s
-	}
+	creds := cred.Credential{}
+	creds.AWSAccessKeyID = c.String("access-key")
+	creds.AWSSecretAccessKey = c.String("secret-key")
+	creds.AWSAssumeRoleARN = c.String("assume-role-arn")
+	creds.AWSRegion = c.String("aws-region")
 
 	service := ecs.Service{Service: c.String("service")}
 	if c.IsSet("cluster") {
