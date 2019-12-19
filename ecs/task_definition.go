@@ -35,8 +35,6 @@ type TaskDefinition struct {
 	Tags []*ecs.Tag
 }
 
-var defaultTaskMemory = "1024"
-
 func (td *TaskDefinition) isValid() error {
 	if td.Family == "" {
 		return fmt.Errorf("Task Definition must have a name")
@@ -89,7 +87,7 @@ func (td *TaskDefinition) Register(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 	}
 
 	fmt.Printf("Registering new Task Definition from [%s]...\n", td.Family)
-	input := td.parse(taskDefinition).unpackRegisterInput()
+	input := td.generateInput(taskDefinition)
 	tdnew, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
 		return nil, err
@@ -124,7 +122,7 @@ func (td *TaskDefinition) Update(svc *ecs.ECS) (*ecs.TaskDefinition, error) {
 	}
 
 	fmt.Printf("Registering new Task Definition from [%s]...\n", td.Family)
-	input := td.parse(tdout.TaskDefinition).unpackRegisterInput()
+	input := td.generateInput(tdout.TaskDefinition)
 	tdnew, err := svc.RegisterTaskDefinition(input)
 	if err != nil {
 		return nil, err
@@ -152,127 +150,78 @@ func (td *TaskDefinition) isEmpty() bool {
 		td.Tags == nil
 }
 
-func (td *TaskDefinition) parse(taskDefinition *ecs.TaskDefinition) *TaskDefinition {
-	if taskDefinition == nil {
-		return td
-	}
-
-	if td.TaskRoleArn == nil {
-		td.TaskRoleArn = taskDefinition.TaskRoleArn
-	}
-	if td.ExecutionRoleArn == nil {
-		td.ExecutionRoleArn = taskDefinition.ExecutionRoleArn
-	}
-	if td.NetworkMode == nil {
-		td.NetworkMode = taskDefinition.NetworkMode
-	}
-	if td.ContainerDefinitions == nil {
-		containers := []*ContainerDefinition{}
-		for _, cd := range taskDefinition.ContainerDefinitions {
-			containers = append(containers, (&ContainerDefinition{Name: *cd.Name}).parse(cd))
-		}
-		td.ContainerDefinitions = containers
-	} else {
-		// map avaiable containers
-		containerMap := make(map[string]*ecs.ContainerDefinition)
-		for _, cd := range taskDefinition.ContainerDefinitions {
-			containerMap[*cd.Name] = cd
-		}
-
-		// parse changes for provided containers
-		containers := []*ContainerDefinition{}
-		for _, cd := range td.ContainerDefinitions {
-			containers = append(containers, cd.parse(containerMap[cd.Name]))
-			delete(containerMap, cd.Name)
-		}
-
-		// ignore non explicit containers
-		if !td.DeleteContainer {
-			for _, cd := range containerMap {
-				containers = append(containers, (&ContainerDefinition{Name: *cd.Name}).parse(cd))
-			}
-		}
-
-		td.ContainerDefinitions = containers
-	}
-	if td.Volumes == nil {
-		td.Volumes = taskDefinition.Volumes
-	}
-	if td.RequiresCompatibilities == nil {
-		td.RequiresCompatibilities = taskDefinition.RequiresCompatibilities
-	}
-	if td.Cpu == nil {
-		td.Cpu = taskDefinition.Cpu
-	}
-	if td.Memory == nil {
-		td.Memory = taskDefinition.Memory
-	}
-	if td.IpcMode == nil {
-		td.IpcMode = taskDefinition.IpcMode
-	}
-	if td.PidMode == nil {
-		td.PidMode = taskDefinition.PidMode
-	}
-	if td.PlacementConstraints == nil {
-		td.PlacementConstraints = taskDefinition.PlacementConstraints
-	}
-	if td.ProxyConfiguration == nil {
-		td.ProxyConfiguration = taskDefinition.ProxyConfiguration
-	}
-
-	return td
-}
-
-func (td *TaskDefinition) unpackRegisterInput() *ecs.RegisterTaskDefinitionInput {
-	registerTaskDefinitionInput := &ecs.RegisterTaskDefinitionInput{}
+func (td *TaskDefinition) generateInput(old *ecs.TaskDefinition) *ecs.RegisterTaskDefinitionInput {
+	taskInput := &ecs.RegisterTaskDefinitionInput{}
 
 	family, _ := parseFamily(td.Family)
-	registerTaskDefinitionInput.Family = &family
+	taskInput.Family = &family
 
 	if td.TaskRoleArn != nil {
-		registerTaskDefinitionInput.TaskRoleArn = td.TaskRoleArn
+		taskInput.TaskRoleArn = td.TaskRoleArn
+	} else {
+		taskInput.TaskRoleArn = old.TaskRoleArn
 	}
 	if td.ExecutionRoleArn != nil {
-		registerTaskDefinitionInput.ExecutionRoleArn = td.ExecutionRoleArn
+		taskInput.ExecutionRoleArn = td.ExecutionRoleArn
+	} else {
+		taskInput.ExecutionRoleArn = old.ExecutionRoleArn
 	}
 	if td.NetworkMode != nil {
-		registerTaskDefinitionInput.NetworkMode = td.NetworkMode
+		taskInput.NetworkMode = td.NetworkMode
+	} else {
+		taskInput.NetworkMode = old.NetworkMode
 	}
 	if td.ContainerDefinitions != nil {
 		containerDefinitions := []*ecs.ContainerDefinition{}
-		for _, cd := range td.ContainerDefinitions {
-			containerDefinitions = append(containerDefinitions, cd.unpack())
+		for i, cd := range td.ContainerDefinitions {
+			containerDefinitions = append(containerDefinitions, cd.generateDefinition(old.ContainerDefinitions[i]))
 		}
-		registerTaskDefinitionInput.ContainerDefinitions = containerDefinitions
+		taskInput.ContainerDefinitions = containerDefinitions
+	} else {
+		taskInput.ContainerDefinitions = old.ContainerDefinitions
 	}
 	if td.Volumes != nil {
-		registerTaskDefinitionInput.Volumes = td.Volumes
+		taskInput.Volumes = td.Volumes
+	} else {
+		taskInput.Volumes = old.Volumes
 	}
 	if td.RequiresCompatibilities != nil {
-		registerTaskDefinitionInput.RequiresCompatibilities = td.RequiresCompatibilities
+		taskInput.RequiresCompatibilities = td.RequiresCompatibilities
+	} else {
+		taskInput.RequiresCompatibilities = old.RequiresCompatibilities
 	}
 	if td.Cpu != nil {
-		registerTaskDefinitionInput.Cpu = td.Cpu
+		taskInput.Cpu = td.Cpu
+	} else {
+		taskInput.Cpu = old.Cpu
 	}
 	if td.Memory != nil {
-		registerTaskDefinitionInput.Memory = td.Memory
+		taskInput.Memory = td.Memory
 	} else {
-		registerTaskDefinitionInput.Memory = &defaultTaskMemory
+		taskInput.Memory = old.Memory
 	}
 	if td.IpcMode != nil {
-		registerTaskDefinitionInput.IpcMode = td.IpcMode
+		taskInput.IpcMode = td.IpcMode
+	} else {
+		taskInput.IpcMode = old.IpcMode
 	}
 	if td.PidMode != nil {
-		registerTaskDefinitionInput.PidMode = td.PidMode
+		taskInput.PidMode = td.PidMode
+	} else {
+		taskInput.PidMode = old.PidMode
 	}
 	if td.PlacementConstraints != nil {
-		registerTaskDefinitionInput.PlacementConstraints = td.PlacementConstraints
+		taskInput.PlacementConstraints = td.PlacementConstraints
+	} else {
+		taskInput.PlacementConstraints = old.PlacementConstraints
 	}
 	if td.ProxyConfiguration != nil {
-		registerTaskDefinitionInput.ProxyConfiguration = td.ProxyConfiguration
+		taskInput.ProxyConfiguration = td.ProxyConfiguration
+	} else {
+		taskInput.ProxyConfiguration = old.ProxyConfiguration
 	}
 
-	return registerTaskDefinitionInput
+	return taskInput
 }
 
 var arnRegex, _ = regexp.Compile(`^arn:aws:ecs:[a-z]{2}-[a-z]+-\d{1,2}:\d{12}:task-definition\/[\w-]+:\d+$`)
