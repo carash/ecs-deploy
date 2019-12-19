@@ -19,9 +19,9 @@ type TaskDefinition struct {
 	ExecutionRoleArn *string
 
 	NetworkMode             *string
-	ContainerDefinitions    *[]*ContainerDefinition
-	Volumes                 *[]*ecs.Volume
-	RequiresCompatibilities *[]*string
+	ContainerDefinitions    []*ContainerDefinition
+	Volumes                 []*ecs.Volume
+	RequiresCompatibilities []*string
 
 	Cpu    *string
 	Memory *string
@@ -29,10 +29,10 @@ type TaskDefinition struct {
 	IpcMode *string
 	PidMode *string
 
-	PlacementConstraints *[]*ecs.TaskDefinitionPlacementConstraint
+	PlacementConstraints []*ecs.TaskDefinitionPlacementConstraint
 	ProxyConfiguration   *ecs.ProxyConfiguration
 
-	Tags *[]*ecs.Tag
+	Tags []*ecs.Tag
 }
 
 var defaultTaskMemory = "1024"
@@ -45,10 +45,10 @@ func (td *TaskDefinition) isValid() error {
 		return fmt.Errorf("Task Definition Family cannot be parsed")
 	}
 	if td.ContainerDefinitions != nil {
-		if len(*td.ContainerDefinitions) < 1 {
+		if len(td.ContainerDefinitions) < 1 {
 			return fmt.Errorf("Container Definitions must have at least 1 Container")
 		}
-		for _, cd := range *td.ContainerDefinitions {
+		for _, cd := range td.ContainerDefinitions {
 			if cd == nil {
 				return fmt.Errorf("Container Definitions cannot have nil value")
 			} else {
@@ -171,7 +171,7 @@ func (td *TaskDefinition) parse(taskDefinition *ecs.TaskDefinition) *TaskDefinit
 		for _, cd := range taskDefinition.ContainerDefinitions {
 			containers = append(containers, (&ContainerDefinition{Name: *cd.Name}).parse(cd))
 		}
-		td.ContainerDefinitions = &containers
+		td.ContainerDefinitions = containers
 	} else {
 		// map avaiable containers
 		containerMap := make(map[string]*ecs.ContainerDefinition)
@@ -181,7 +181,7 @@ func (td *TaskDefinition) parse(taskDefinition *ecs.TaskDefinition) *TaskDefinit
 
 		// parse changes for provided containers
 		containers := []*ContainerDefinition{}
-		for _, cd := range *td.ContainerDefinitions {
+		for _, cd := range td.ContainerDefinitions {
 			containers = append(containers, cd.parse(containerMap[cd.Name]))
 			delete(containerMap, cd.Name)
 		}
@@ -193,13 +193,13 @@ func (td *TaskDefinition) parse(taskDefinition *ecs.TaskDefinition) *TaskDefinit
 			}
 		}
 
-		td.ContainerDefinitions = &containers
+		td.ContainerDefinitions = containers
 	}
 	if td.Volumes == nil {
-		td.Volumes = &taskDefinition.Volumes
+		td.Volumes = taskDefinition.Volumes
 	}
 	if td.RequiresCompatibilities == nil {
-		td.RequiresCompatibilities = &taskDefinition.RequiresCompatibilities
+		td.RequiresCompatibilities = taskDefinition.RequiresCompatibilities
 	}
 	if td.Cpu == nil {
 		td.Cpu = taskDefinition.Cpu
@@ -214,7 +214,7 @@ func (td *TaskDefinition) parse(taskDefinition *ecs.TaskDefinition) *TaskDefinit
 		td.PidMode = taskDefinition.PidMode
 	}
 	if td.PlacementConstraints == nil {
-		td.PlacementConstraints = &taskDefinition.PlacementConstraints
+		td.PlacementConstraints = taskDefinition.PlacementConstraints
 	}
 	if td.ProxyConfiguration == nil {
 		td.ProxyConfiguration = taskDefinition.ProxyConfiguration
@@ -240,16 +240,16 @@ func (td *TaskDefinition) unpackRegisterInput() *ecs.RegisterTaskDefinitionInput
 	}
 	if td.ContainerDefinitions != nil {
 		containerDefinitions := []*ecs.ContainerDefinition{}
-		for _, cd := range *td.ContainerDefinitions {
+		for _, cd := range td.ContainerDefinitions {
 			containerDefinitions = append(containerDefinitions, cd.unpack())
 		}
 		registerTaskDefinitionInput.ContainerDefinitions = containerDefinitions
 	}
 	if td.Volumes != nil {
-		registerTaskDefinitionInput.Volumes = *td.Volumes
+		registerTaskDefinitionInput.Volumes = td.Volumes
 	}
 	if td.RequiresCompatibilities != nil {
-		registerTaskDefinitionInput.RequiresCompatibilities = *td.RequiresCompatibilities
+		registerTaskDefinitionInput.RequiresCompatibilities = td.RequiresCompatibilities
 	}
 	if td.Cpu != nil {
 		registerTaskDefinitionInput.Cpu = td.Cpu
@@ -266,7 +266,7 @@ func (td *TaskDefinition) unpackRegisterInput() *ecs.RegisterTaskDefinitionInput
 		registerTaskDefinitionInput.PidMode = td.PidMode
 	}
 	if td.PlacementConstraints != nil {
-		registerTaskDefinitionInput.PlacementConstraints = *td.PlacementConstraints
+		registerTaskDefinitionInput.PlacementConstraints = td.PlacementConstraints
 	}
 	if td.ProxyConfiguration != nil {
 		registerTaskDefinitionInput.ProxyConfiguration = td.ProxyConfiguration
