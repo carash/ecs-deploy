@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	awsecs "github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/carash/ecs-deploy/ecs"
 	cred "github.com/carash/ecs-deploy/credential"
+	"github.com/carash/ecs-deploy/ecs"
 	"github.com/urfave/cli"
 )
 
@@ -136,7 +136,7 @@ func run(c *cli.Context) error {
 			container.Image = &s
 		}
 
-		task.ContainerDefinitions = &[]*ecs.ContainerDefinition{&container}
+		task.ContainerDefinitions = []*ecs.ContainerDefinition{&container}
 		service.TaskDefinition = &task
 	}
 
